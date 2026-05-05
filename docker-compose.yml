@@ -1,0 +1,43 @@
+# USO:
+# sudo docker compose -f docker-compose.yml  up --build -d
+# sudo docker compose -f docker-compose.yml  down
+#
+# Se books-network ou mongo-network não existirem, crie manualmente:
+# docker network create books-network
+# docker network create mongo-network
+
+services:
+    books-srv:
+        build: .
+        image: books-srv        
+        restart: always
+
+        networks:
+            - books-network
+            - mongo-network
+
+        ports:
+            - "4010:4010"
+        env_file:
+            - .env
+
+        environment:
+            TZ: America/Fortaleza
+            SERVER_HOST: 0.0.0.0
+            SERVER_PORT: "4010"
+            MD_HOST: mongodb
+            MD_PORT: "27017"
+
+        volumes:
+            - /etc/localtime:/etc/localtime:ro
+            - /etc/timezone:/etc/timezone:ro
+            - ./logs:/app/logs # Mapeia a pasta local ./logs para persistir os logs do container
+
+networks:
+  books-network:
+    external: true
+    name: books-network
+
+  mongo-network:
+    external: true
+    name: mongo-network

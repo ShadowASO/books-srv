@@ -1,0 +1,1011 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a template server.",
+        "title": "Server API",
+        "termsOfService": "http://swagger.io",
+        "contact": {
+            "name": "API Support",
+            "url": "http://swagger.io",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/auth/login": {
+            "post": {
+                "description": "Valida usuário e senha e retorna um access token e um refresh token.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login do usuário",
+                "parameters": [
+                    {
+                        "description": "Dados de login",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/login.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Login realizado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Formato inválido ou campos obrigatórios ausentes",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Usuário ou senha inválidos",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao gerar token",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "description": "Realiza logout em modelo stateless. Como o JWT é stateless, a invalidação efetiva depende da política do cliente ou de blacklist no backend.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Logout do usuário",
+                "responses": {
+                    "200": {
+                        "description": "Login realizado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/token/refresh": {
+            "post": {
+                "description": "Valida um refresh token e retorna um novo access token.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Renovar access token",
+                "parameters": [
+                    {
+                        "description": "Refresh token",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/login.TokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Login realizado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Formato inválido ou campos obrigatórios ausentes",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Usuário ou senha inválidos",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao gerar token",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/token/verify": {
+            "post": {
+                "description": "Verifica se um access token JWT é válido e retorna os dados principais das claims.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Verificar token",
+                "parameters": [
+                    {
+                        "description": "Token JWT",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/login.TokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Login realizado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Formato inválido ou campos obrigatórios ausentes",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Usuário ou senha inválidos",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tabelas/books": {
+            "post": {
+                "description": "Insere um novo registro de livro na base de dados. Os campos nome da obra e autor são obrigatórios.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "books"
+                ],
+                "summary": "Cadastra um novo livro",
+                "parameters": [
+                    {
+                        "description": "Dados do livro a ser cadastrado",
+                        "name": "book",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/books.BookCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Livro cadastrado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "JSON inválido ou campos obrigatórios ausentes",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao cadastrar o livro",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tabelas/books/search/nm-obra": {
+            "post": {
+                "description": "Realiza busca aproximada de livros pelo nome da obra. Caso o número máximo de documentos não seja informado, será utilizado o limite padrão de 10 registros.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "books"
+                ],
+                "summary": "Busca livros pelo nome da obra",
+                "parameters": [
+                    {
+                        "description": "Parâmetros da busca aproximada",
+                        "name": "search",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/books.BookSearch"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Busca realizada com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "JSON inválido ou expressão de busca não informada",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao buscar livros",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tabelas/books/{id}": {
+            "get": {
+                "description": "Retorna os dados de um livro a partir do seu identificador MongoDB ObjectID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "books"
+                ],
+                "summary": "Busca um livro por ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do livro no formato ObjectID hexadecimal",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Livro localizado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "ID não informado ou inválido",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao buscar o livro",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Atualiza os dados de um livro existente a partir do seu identificador MongoDB ObjectID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "books"
+                ],
+                "summary": "Atualiza um livro por ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do livro no formato ObjectID hexadecimal",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados do livro a serem atualizados",
+                        "name": "book",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/books.BookUpdate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Livro atualizado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "ID inválido ou JSON em formato incorreto",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao atualizar o livro",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Exclui um livro da base de dados a partir do seu identificador MongoDB ObjectID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "books"
+                ],
+                "summary": "Remove um livro por ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do livro no formato ObjectID hexadecimal",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Livro removido com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "ID não informado ou inválido",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao remover o livro",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "description": "Retorna todos os usuários cadastrados.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Lista usuários",
+                "responses": {
+                    "200": {
+                        "description": "Usuários listados com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao listar usuários",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Insere um novo usuário na base PostgreSQL. Os campos userrole, username, password e email são obrigatórios.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Cadastra um novo usuário",
+                "parameters": [
+                    {
+                        "description": "Dados do usuário a ser cadastrado",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.UserCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Usuário cadastrado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "JSON inválido ou campos obrigatórios ausentes",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao cadastrar o usuário",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/email/{email}": {
+            "get": {
+                "description": "Retorna os dados de um usuário a partir do email.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Busca um usuário por email",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Email do usuário",
+                        "name": "email",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuário localizado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Email não informado",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao buscar o usuário",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/search": {
+            "post": {
+                "description": "Realiza busca aproximada de usuários por username, email ou userrole.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Pesquisa usuários",
+                "parameters": [
+                    {
+                        "description": "Parâmetros da busca",
+                        "name": "search",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.UserSearch"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Busca realizada com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "JSON inválido",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao buscar usuários",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/username/{username}": {
+            "get": {
+                "description": "Retorna os dados de um usuário a partir do username.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Busca um usuário por username",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username do usuário",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuário localizado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Username não informado",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao buscar o usuário",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}": {
+            "get": {
+                "description": "Retorna os dados de um usuário a partir do seu ID numérico.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Busca um usuário por ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID numérico do usuário",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuário localizado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "ID não informado ou inválido",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao buscar o usuário",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Atualiza os dados de um usuário existente. Se password vier vazio, a senha atual será mantida.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Atualiza um usuário por ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID numérico do usuário",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados do usuário a serem atualizados",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.UserUpdate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuário atualizado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "ID inválido ou JSON em formato incorreto",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao atualizar o usuário",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Exclui um usuário da base PostgreSQL a partir do seu ID numérico.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Remove um usuário por ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID numérico do usuário",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuário removido com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "ID não informado ou inválido",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao remover o usuário",
+                        "schema": {
+                            "$ref": "#/definitions/msresponse.APIResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "books.BookCreate": {
+            "type": "object",
+            "properties": {
+                "dt_alt": {
+                    "type": "string"
+                },
+                "dt_aqu": {
+                    "type": "string"
+                },
+                "dt_edi": {
+                    "type": "string"
+                },
+                "dt_inc": {
+                    "type": "string"
+                },
+                "nm_assu": {
+                    "type": "string"
+                },
+                "nm_autor": {
+                    "type": "string"
+                },
+                "nm_edit": {
+                    "type": "string"
+                },
+                "nm_isbn": {
+                    "type": "string"
+                },
+                "nm_obra": {
+                    "type": "string"
+                },
+                "nr_edi": {
+                    "type": "integer"
+                },
+                "nr_pags": {
+                    "type": "integer"
+                },
+                "nr_vol": {
+                    "type": "integer"
+                },
+                "sn_ativo": {
+                    "type": "string"
+                },
+                "txt_obs": {
+                    "type": "string"
+                },
+                "usu_alt": {
+                    "type": "string"
+                },
+                "usu_inc": {
+                    "type": "string"
+                },
+                "vr_aqu": {
+                    "type": "number"
+                }
+            }
+        },
+        "books.BookSearch": {
+            "type": "object",
+            "properties": {
+                "nm_search": {
+                    "type": "string"
+                },
+                "nr_docs": {
+                    "type": "integer"
+                }
+            }
+        },
+        "books.BookUpdate": {
+            "type": "object",
+            "properties": {
+                "dt_alt": {
+                    "type": "string"
+                },
+                "dt_aqu": {
+                    "type": "string"
+                },
+                "dt_edi": {
+                    "type": "string"
+                },
+                "nm_assu": {
+                    "type": "string"
+                },
+                "nm_autor": {
+                    "type": "string"
+                },
+                "nm_edit": {
+                    "type": "string"
+                },
+                "nm_isbn": {
+                    "type": "string"
+                },
+                "nm_obra": {
+                    "type": "string"
+                },
+                "nr_edi": {
+                    "type": "integer"
+                },
+                "nr_pags": {
+                    "type": "integer"
+                },
+                "nr_vol": {
+                    "type": "integer"
+                },
+                "sn_ativo": {
+                    "type": "string"
+                },
+                "txt_obs": {
+                    "type": "string"
+                },
+                "usu_alt": {
+                    "type": "string"
+                },
+                "vr_aqu": {
+                    "type": "number"
+                }
+            }
+        },
+        "login.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "example": "123456"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "aldenor"
+                }
+            }
+        },
+        "login.TokenRequest": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+            }
+        },
+        "msresponse.APIResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "error": {
+                    "$ref": "#/definitions/msresponse.ErrorBody"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Sucesso"
+                },
+                "ok": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "request_id": {
+                    "type": "string",
+                    "example": "7f8c2a9b-5f8a-4b0e-91e5-3b9c2d9a1234"
+                }
+            }
+        },
+        "msresponse.ErrorBody": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/msresponse.ErrorCode"
+                        }
+                    ],
+                    "example": 1
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Campo nm_obra é obrigatório"
+                }
+            }
+        },
+        "msresponse.ErrorCode": {
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                500
+            ],
+            "x-enum-varnames": [
+                "ErrorFormatoInvalido",
+                "ErrorTokenInvalido",
+                "ErrorNaoAutorizado",
+                "ErrorNaoEncontrado",
+                "ErrorValidacao",
+                "ErrorInterno"
+            ]
+        },
+        "user.UserCreate": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "userrole": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.UserSearch": {
+            "type": "object",
+            "properties": {
+                "nm_search": {
+                    "type": "string"
+                },
+                "nr_docs": {
+                    "type": "integer"
+                }
+            }
+        },
+        "user.UserUpdate": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "userrole": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

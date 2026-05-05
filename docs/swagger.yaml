@@ -1,0 +1,680 @@
+basePath: /api/v1
+definitions:
+  books.BookCreate:
+    properties:
+      dt_alt:
+        type: string
+      dt_aqu:
+        type: string
+      dt_edi:
+        type: string
+      dt_inc:
+        type: string
+      nm_assu:
+        type: string
+      nm_autor:
+        type: string
+      nm_edit:
+        type: string
+      nm_isbn:
+        type: string
+      nm_obra:
+        type: string
+      nr_edi:
+        type: integer
+      nr_pags:
+        type: integer
+      nr_vol:
+        type: integer
+      sn_ativo:
+        type: string
+      txt_obs:
+        type: string
+      usu_alt:
+        type: string
+      usu_inc:
+        type: string
+      vr_aqu:
+        type: number
+    type: object
+  books.BookSearch:
+    properties:
+      nm_search:
+        type: string
+      nr_docs:
+        type: integer
+    type: object
+  books.BookUpdate:
+    properties:
+      dt_alt:
+        type: string
+      dt_aqu:
+        type: string
+      dt_edi:
+        type: string
+      nm_assu:
+        type: string
+      nm_autor:
+        type: string
+      nm_edit:
+        type: string
+      nm_isbn:
+        type: string
+      nm_obra:
+        type: string
+      nr_edi:
+        type: integer
+      nr_pags:
+        type: integer
+      nr_vol:
+        type: integer
+      sn_ativo:
+        type: string
+      txt_obs:
+        type: string
+      usu_alt:
+        type: string
+      vr_aqu:
+        type: number
+    type: object
+  login.LoginRequest:
+    properties:
+      password:
+        example: "123456"
+        type: string
+      username:
+        example: aldenor
+        type: string
+    type: object
+  login.TokenRequest:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  msresponse.APIResponse:
+    properties:
+      data: {}
+      error:
+        $ref: '#/definitions/msresponse.ErrorBody'
+      message:
+        example: Sucesso
+        type: string
+      ok:
+        example: true
+        type: boolean
+      request_id:
+        example: 7f8c2a9b-5f8a-4b0e-91e5-3b9c2d9a1234
+        type: string
+    type: object
+  msresponse.ErrorBody:
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/msresponse.ErrorCode'
+        example: 1
+      description:
+        example: Campo nm_obra é obrigatório
+        type: string
+    type: object
+  msresponse.ErrorCode:
+    enum:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 500
+    type: integer
+    x-enum-varnames:
+    - ErrorFormatoInvalido
+    - ErrorTokenInvalido
+    - ErrorNaoAutorizado
+    - ErrorNaoEncontrado
+    - ErrorValidacao
+    - ErrorInterno
+  user.UserCreate:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+      userrole:
+        type: string
+    type: object
+  user.UserSearch:
+    properties:
+      nm_search:
+        type: string
+      nr_docs:
+        type: integer
+    type: object
+  user.UserUpdate:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+      userrole:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://swagger.io
+  description: This is a template server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io
+  title: Server API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Valida usuário e senha e retorna um access token e um refresh token.
+      parameters:
+      - description: Dados de login
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/login.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login realizado com sucesso
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "400":
+          description: Formato inválido ou campos obrigatórios ausentes
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "401":
+          description: Usuário ou senha inválidos
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "500":
+          description: Erro interno ao gerar token
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+      summary: Login do usuário
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Realiza logout em modelo stateless. Como o JWT é stateless, a invalidação
+        efetiva depende da política do cliente ou de blacklist no backend.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login realizado com sucesso
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+      summary: Logout do usuário
+      tags:
+      - Auth
+  /auth/token/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Valida um refresh token e retorna um novo access token.
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/login.TokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login realizado com sucesso
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "400":
+          description: Formato inválido ou campos obrigatórios ausentes
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "401":
+          description: Usuário ou senha inválidos
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "500":
+          description: Erro interno ao gerar token
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+      summary: Renovar access token
+      tags:
+      - Auth
+  /auth/token/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verifica se um access token JWT é válido e retorna os dados principais
+        das claims.
+      parameters:
+      - description: Token JWT
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/login.TokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login realizado com sucesso
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "400":
+          description: Formato inválido ou campos obrigatórios ausentes
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "401":
+          description: Usuário ou senha inválidos
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+      summary: Verificar token
+      tags:
+      - Auth
+  /tabelas/books:
+    post:
+      consumes:
+      - application/json
+      description: Insere um novo registro de livro na base de dados. Os campos nome
+        da obra e autor são obrigatórios.
+      parameters:
+      - description: Dados do livro a ser cadastrado
+        in: body
+        name: book
+        required: true
+        schema:
+          $ref: '#/definitions/books.BookCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Livro cadastrado com sucesso
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "400":
+          description: JSON inválido ou campos obrigatórios ausentes
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "500":
+          description: Erro interno ao cadastrar o livro
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+      summary: Cadastra um novo livro
+      tags:
+      - books
+  /tabelas/books/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Exclui um livro da base de dados a partir do seu identificador
+        MongoDB ObjectID.
+      parameters:
+      - description: ID do livro no formato ObjectID hexadecimal
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Livro removido com sucesso
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "400":
+          description: ID não informado ou inválido
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "500":
+          description: Erro interno ao remover o livro
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+      summary: Remove um livro por ID
+      tags:
+      - books
+    get:
+      consumes:
+      - application/json
+      description: Retorna os dados de um livro a partir do seu identificador MongoDB
+        ObjectID.
+      parameters:
+      - description: ID do livro no formato ObjectID hexadecimal
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Livro localizado com sucesso
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "400":
+          description: ID não informado ou inválido
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "500":
+          description: Erro interno ao buscar o livro
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+      summary: Busca um livro por ID
+      tags:
+      - books
+    put:
+      consumes:
+      - application/json
+      description: Atualiza os dados de um livro existente a partir do seu identificador
+        MongoDB ObjectID.
+      parameters:
+      - description: ID do livro no formato ObjectID hexadecimal
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados do livro a serem atualizados
+        in: body
+        name: book
+        required: true
+        schema:
+          $ref: '#/definitions/books.BookUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Livro atualizado com sucesso
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "400":
+          description: ID inválido ou JSON em formato incorreto
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "500":
+          description: Erro interno ao atualizar o livro
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+      summary: Atualiza um livro por ID
+      tags:
+      - books
+  /tabelas/books/search/nm-obra:
+    post:
+      consumes:
+      - application/json
+      description: Realiza busca aproximada de livros pelo nome da obra. Caso o número
+        máximo de documentos não seja informado, será utilizado o limite padrão de
+        10 registros.
+      parameters:
+      - description: Parâmetros da busca aproximada
+        in: body
+        name: search
+        required: true
+        schema:
+          $ref: '#/definitions/books.BookSearch'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Busca realizada com sucesso
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "400":
+          description: JSON inválido ou expressão de busca não informada
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "500":
+          description: Erro interno ao buscar livros
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+      summary: Busca livros pelo nome da obra
+      tags:
+      - books
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Retorna todos os usuários cadastrados.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuários listados com sucesso
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "500":
+          description: Erro interno ao listar usuários
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+      summary: Lista usuários
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Insere um novo usuário na base PostgreSQL. Os campos userrole,
+        username, password e email são obrigatórios.
+      parameters:
+      - description: Dados do usuário a ser cadastrado
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/user.UserCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Usuário cadastrado com sucesso
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "400":
+          description: JSON inválido ou campos obrigatórios ausentes
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "500":
+          description: Erro interno ao cadastrar o usuário
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+      summary: Cadastra um novo usuário
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Exclui um usuário da base PostgreSQL a partir do seu ID numérico.
+      parameters:
+      - description: ID numérico do usuário
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuário removido com sucesso
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "400":
+          description: ID não informado ou inválido
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "500":
+          description: Erro interno ao remover o usuário
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+      summary: Remove um usuário por ID
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      description: Retorna os dados de um usuário a partir do seu ID numérico.
+      parameters:
+      - description: ID numérico do usuário
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuário localizado com sucesso
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "400":
+          description: ID não informado ou inválido
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "500":
+          description: Erro interno ao buscar o usuário
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+      summary: Busca um usuário por ID
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Atualiza os dados de um usuário existente. Se password vier vazio,
+        a senha atual será mantida.
+      parameters:
+      - description: ID numérico do usuário
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Dados do usuário a serem atualizados
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/user.UserUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuário atualizado com sucesso
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "400":
+          description: ID inválido ou JSON em formato incorreto
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "500":
+          description: Erro interno ao atualizar o usuário
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+      summary: Atualiza um usuário por ID
+      tags:
+      - users
+  /users/email/{email}:
+    get:
+      consumes:
+      - application/json
+      description: Retorna os dados de um usuário a partir do email.
+      parameters:
+      - description: Email do usuário
+        in: path
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuário localizado com sucesso
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "400":
+          description: Email não informado
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "500":
+          description: Erro interno ao buscar o usuário
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+      summary: Busca um usuário por email
+      tags:
+      - users
+  /users/search:
+    post:
+      consumes:
+      - application/json
+      description: Realiza busca aproximada de usuários por username, email ou userrole.
+      parameters:
+      - description: Parâmetros da busca
+        in: body
+        name: search
+        required: true
+        schema:
+          $ref: '#/definitions/user.UserSearch'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Busca realizada com sucesso
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "400":
+          description: JSON inválido
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "500":
+          description: Erro interno ao buscar usuários
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+      summary: Pesquisa usuários
+      tags:
+      - users
+  /users/username/{username}:
+    get:
+      consumes:
+      - application/json
+      description: Retorna os dados de um usuário a partir do username.
+      parameters:
+      - description: Username do usuário
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuário localizado com sucesso
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "400":
+          description: Username não informado
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+        "500":
+          description: Erro interno ao buscar o usuário
+          schema:
+            $ref: '#/definitions/msresponse.APIResponse'
+      summary: Busca um usuário por username
+      tags:
+      - users
+swagger: "2.0"
