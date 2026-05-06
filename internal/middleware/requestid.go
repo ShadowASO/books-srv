@@ -45,3 +45,13 @@ func RequestIDMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func GetRequestID(c *gin.Context) string {
+	rid := c.GetString(CtxRequestID)
+
+	if rid == "" {
+		rid = c.GetHeader("X-Request-Id")
+	}
+	return rid
+
+}

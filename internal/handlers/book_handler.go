@@ -9,7 +9,7 @@ package handlers
 
 import (
 	"microsrv/internal/domain/books"
-	"microsrv/internal/pkg/mslogger"
+
 	"microsrv/internal/pkg/msresponse"
 	"microsrv/internal/services"
 	"net/http"
@@ -71,7 +71,7 @@ func (h *BooksHandler) Insert(c *gin.Context) {
 	var book books.BookCreate
 
 	if err := c.ShouldBindJSON(&book); err != nil {
-		mslogger.LoggerGlobal.Errorf("JSON com formato inválido: %v", err)
+		//mslogger.LoggerGlobal.Errorf("JSON com formato inválido: %v", err)
 
 		msresponse.Fail(
 			c,
@@ -84,7 +84,7 @@ func (h *BooksHandler) Insert(c *gin.Context) {
 	}
 
 	if strings.TrimSpace(book.NmObra) == "" || strings.TrimSpace(book.NmAutor) == "" {
-		mslogger.LoggerGlobal.Error("Faltam campos obrigatórios")
+		//mslogger.LoggerGlobal.Error("Faltam campos obrigatórios")
 
 		msresponse.Fail(
 			c,
@@ -98,7 +98,7 @@ func (h *BooksHandler) Insert(c *gin.Context) {
 
 	res, err := h.Service.Insert(c.Request.Context(), book)
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Erro ao inserir livro: %v", err)
+		//mslogger.LoggerGlobal.Errorf("Erro ao inserir livro: %v", err)
 
 		msresponse.Fail(
 			c,
@@ -133,7 +133,7 @@ func (h *BooksHandler) Select(c *gin.Context) {
 
 	result, err := h.Service.Select(c.Request.Context(), books.BookID(idHex))
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Erro ao buscar livro id=%s: %v", idHex, err)
+		//mslogger.LoggerGlobal.Errorf("Erro ao buscar livro id=%s: %v", idHex, err)
 
 		msresponse.Fail(
 			c,
@@ -168,7 +168,7 @@ func (h *BooksHandler) Delete(c *gin.Context) {
 
 	result, err := h.Service.Delete(c.Request.Context(), books.BookID(idHex))
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Erro ao remover livro id=%s: %v", idHex, err)
+		//mslogger.LoggerGlobal.Errorf("Erro ao remover livro id=%s: %v", idHex, err)
 
 		msresponse.Fail(
 			c,
@@ -205,7 +205,7 @@ func (h *BooksHandler) Update(c *gin.Context) {
 	var book books.BookUpdate
 
 	if err := c.ShouldBindJSON(&book); err != nil {
-		mslogger.LoggerGlobal.Errorf("JSON com formato inválido: %v", err)
+		//mslogger.LoggerGlobal.Errorf("JSON com formato inválido: %v", err)
 
 		msresponse.Fail(
 			c,
@@ -219,7 +219,7 @@ func (h *BooksHandler) Update(c *gin.Context) {
 
 	result, err := h.Service.Update(c.Request.Context(), books.BookID(idHex), book)
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Erro ao atualizar livro id=%s: %v", idHex, err)
+		//mslogger.LoggerGlobal.Errorf("Erro ao atualizar livro id=%s: %v", idHex, err)
 
 		msresponse.Fail(
 			c,
@@ -250,7 +250,7 @@ func (h *BooksHandler) SearchByNmObra(c *gin.Context) {
 	var book books.BookSearch
 
 	if err := c.ShouldBindJSON(&book); err != nil {
-		mslogger.LoggerGlobal.Errorf("JSON com formato inválido: %v", err)
+		//mslogger.LoggerGlobal.Errorf("JSON com formato inválido: %v", err)
 
 		msresponse.Fail(
 			c,
@@ -265,7 +265,7 @@ func (h *BooksHandler) SearchByNmObra(c *gin.Context) {
 	book.NmSearch = strings.TrimSpace(book.NmSearch)
 
 	if book.NmSearch == "" {
-		mslogger.LoggerGlobal.Error("Expressão de busca não informada")
+		//mslogger.LoggerGlobal.Error("Expressão de busca não informada")
 
 		msresponse.Fail(
 			c,
@@ -287,7 +287,7 @@ func (h *BooksHandler) SearchByNmObra(c *gin.Context) {
 		int64(book.NrDocs),
 	)
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Erro ao buscar livros por nome da obra: %v", err)
+		//mslogger.LoggerGlobal.Errorf("Erro ao buscar livros por nome da obra: %v", err)
 
 		msresponse.Fail(
 			c,

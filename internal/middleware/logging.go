@@ -10,7 +10,6 @@ package middleware
 
 import (
 	"fmt"
-
 	"time"
 
 	"microsrv/internal/pkg/mslogger"
@@ -19,14 +18,39 @@ import (
 )
 
 func Logging() gin.HandlerFunc {
-
 	return func(c *gin.Context) {
 		start := time.Now()
+
 		c.Next()
+
 		duration := time.Since(start)
-		msg := fmt.Sprintf("| %d |  %v | %s  | %s : %s", c.Writer.Status(), duration, c.Request.Method, c.RemoteIP(), c.Request.URL.Path)
 
-		mslogger.LoggerGlobal.Info(msg)
+		id := c.Writer.Header().Get("X-Request-Id")
+		if id == "" {
+			id = c.GetString("request_id")
+		}
 
+		var errorCode string
+		if v, ok := c.Get("error_code"); ok && v != nil {
+			errorCode = fmt.Sprint(v)
+		}
+
+		var errorDetail string
+		if v, ok := c.Get("error_detail"); ok && v != nil {
+			errorDetail = fmt.Sprint(v)
+		}
+
+		mslogger.LoggerGlobal.HTTP(mslogger.HTTPLogData{
+			ID:          id,
+			Status:      c.Writer.Status(),
+			Method:      c.Request.Method,
+			Path:        c.Request.URL.Path,
+			Route:       c.FullPath(),
+			Handler:     c.HandlerName(),
+			ClientIP:    c.ClientIP(),
+			Duration:    duration,
+			ErrorCode:   errorCode,
+			ErrorDetail: errorDetail,
+		})
 	}
 }

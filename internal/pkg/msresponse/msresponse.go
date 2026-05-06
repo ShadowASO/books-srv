@@ -3,13 +3,13 @@
 File: msresponse.go
 Autor: Aldenor
 Data: 04-05-2026
-Alteração: 04-05-2026
+Alteração: 06-05-2026
 ---------------------------------------------------------------------------------------
 */
 package msresponse
 
 import (
-	"log"
+	"fmt"
 	"microsrv/internal/pkg/mslogger"
 	"time"
 
@@ -44,14 +44,35 @@ type ErrorBody struct {
 
 // LogTime registra um marco temporal de um processo.
 func LogTime(msg string) {
-	log.Printf("%s: %s", msg, time.Now().Format("2006-01-02 15:04:05"))
+	if mslogger.LoggerGlobal != nil {
+		mslogger.LoggerGlobal.InfoData("time_marker", mslogger.AppLogData{
+			Context: fmt.Sprintf("%s: %s", msg, time.Now().Format("2006-01-02 15:04:05")),
+		})
+		return
+	}
+
+	fmt.Printf("%s: %s\n", msg, time.Now().Format("2006-01-02 15:04:05"))
 }
 
 func getRequestID(c *gin.Context) string {
+	if c == nil {
+		return ""
+	}
+
 	if v, ok := c.Get("id"); ok {
 		if s, ok := v.(string); ok {
 			return s
 		}
+	}
+
+	if v, ok := c.Get("request_id"); ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+
+	if rid := c.Writer.Header().Get("X-Request-Id"); rid != "" {
+		return rid
 	}
 
 	return ""
@@ -89,14 +110,17 @@ func Fail(
 ) {
 	rid := getRequestID(c)
 
-	mslogger.LoggerGlobal.Errorf(
-		"id=%s status=%d code=%d message=%s description=%s",
-		rid,
-		status,
-		code,
-		message,
-		description,
-	)
+	// Não logar 400/401/403/404 como erro de aplicação.
+	// Esses casos já serão registrados pelo middleware HTTP.
+	if status >= 500 && mslogger.LoggerGlobal != nil {
+		mslogger.LoggerGlobal.ErrorData("response_fail", mslogger.AppLogData{
+			ID:          rid,
+			Status:      status,
+			Code:        int(code),
+			Context:     message,
+			Description: description,
+		})
+	}
 
 	SetRequestID(c, status, APIResponse{
 		OK:      false,

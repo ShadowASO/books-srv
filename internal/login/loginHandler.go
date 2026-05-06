@@ -10,7 +10,7 @@ package login
 
 import (
 	auth "microsrv/internal/pkg/msauth"
-	"microsrv/internal/pkg/mslogger"
+
 	"microsrv/internal/pkg/msresponse"
 	"microsrv/internal/services"
 	"net/http"
@@ -78,7 +78,7 @@ func (obj *LoginHandlerType) VerifyToken(c *gin.Context) {
 	//claims, err := obj.jwt.ValidateString(body.Token)
 	claims, err := obj.jwt.ParseTokenByType(body.Token, auth.TokenTypeAccess)
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Access token inválido: %v", err)
+		//mslogger.LoggerGlobal.Errorf("Access token inválido: %v", err)
 
 		msresponse.Fail(
 			c,
@@ -143,7 +143,7 @@ func (obj *LoginHandlerType) RefreshToken(c *gin.Context) {
 	//claims, err := obj.jwt.ValidateString(body.Token)
 	claims, err := obj.jwt.ParseTokenByType(body.Token, auth.TokenTypeRefresh)
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Refresh token inválido: %v", err)
+		//mslogger.LoggerGlobal.Errorf("Refresh token inválido: %v", err)
 
 		msresponse.Fail(
 			c,
@@ -164,7 +164,7 @@ func (obj *LoginHandlerType) RefreshToken(c *gin.Context) {
 		obj.accessExpire,
 	)
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Erro ao gerar access token: %v", err)
+		//mslogger.LoggerGlobal.Errorf("Erro ao gerar access token: %v", err)
 
 		msresponse.Fail(
 			c,
@@ -225,7 +225,7 @@ func (obj *LoginHandlerType) Login(c *gin.Context) {
 
 	usr, err := obj.service.SelectUserByName(c.Request.Context(), body.Username)
 	if err != nil || usr == nil {
-		mslogger.LoggerGlobal.Errorf("Falha na autenticação do usuário %q: %v", body.Username, err)
+		//mslogger.LoggerGlobal.Errorf("Falha na autenticação do usuário %q: %v", body.Username, err)
 
 		msresponse.Fail(
 			c,
@@ -239,7 +239,7 @@ func (obj *LoginHandlerType) Login(c *gin.Context) {
 
 	/* Valida a senha do usuário */
 	if !auth.CheckPassword(body.Password, usr.Password) {
-		mslogger.LoggerGlobal.Warnf("Falha de autenticação para o usuário %q", body.Username)
+		//mslogger.LoggerGlobal.Warnf("Falha de autenticação para o usuário %q", body.Username)
 
 		msresponse.Fail(
 			c,
@@ -260,7 +260,7 @@ func (obj *LoginHandlerType) Login(c *gin.Context) {
 		obj.accessExpire,
 	)
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Erro ao gerar access token: %v", err)
+		//mslogger.LoggerGlobal.Errorf("Erro ao gerar access token: %v", err)
 
 		msresponse.Fail(
 			c,
@@ -281,7 +281,7 @@ func (obj *LoginHandlerType) Login(c *gin.Context) {
 		obj.refreshExpire,
 	)
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Erro ao gerar refresh token para o usuário %q: %v", usr.Username, err)
+		//mslogger.LoggerGlobal.Errorf("Erro ao gerar refresh token para o usuário %q: %v", usr.Username, err)
 
 		msresponse.Fail(
 			c,

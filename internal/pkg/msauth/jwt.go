@@ -208,7 +208,7 @@ func (j *JWTService) AuthMiddleware() gin.HandlerFunc {
 		h := c.GetHeader("Authorization")
 
 		if h == "" {
-			mslogger.LoggerGlobal.Warn("Cabeçalho Authorization ausente")
+			//mslogger.LoggerGlobal.Warn("Cabeçalho Authorization ausente")
 
 			msresponse.Fail(
 				c,
@@ -224,7 +224,7 @@ func (j *JWTService) AuthMiddleware() gin.HandlerFunc {
 
 		tokenStr, err := ExtractBearerToken(h)
 		if err != nil {
-			mslogger.LoggerGlobal.Warnf("Token mal formatado: %v", err)
+			//mslogger.LoggerGlobal.Warnf("Token mal formatado: %v", err)
 
 			msresponse.Fail(
 				c,
@@ -240,7 +240,7 @@ func (j *JWTService) AuthMiddleware() gin.HandlerFunc {
 
 		claims, err := j.ParseTokenByType(tokenStr, TokenTypeAccess)
 		if err != nil {
-			mslogger.LoggerGlobal.Warnf("Token inválido ou expirado: %v", err)
+			//mslogger.LoggerGlobal.Warnf("Token inválido ou expirado: %v", err)
 
 			msresponse.Fail(
 				c,

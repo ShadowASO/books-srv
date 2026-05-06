@@ -9,7 +9,7 @@ import (
 )
 
 // Versao da aplicação
-const AppVersion = "Biblioteca 1.0.0"
+const AppVersion = "Books 1.0.0"
 
 func VersionHandler(c *gin.Context) {
 

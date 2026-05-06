@@ -13,7 +13,7 @@ package handlers
 
 import (
 	"microsrv/internal/domain/user"
-	"microsrv/internal/pkg/mslogger"
+
 	"microsrv/internal/pkg/msresponse"
 	"microsrv/internal/services"
 	"net/http"
@@ -78,7 +78,7 @@ func (h *UserHandler) Insert(c *gin.Context) {
 	var body user.UserCreate
 
 	if err := c.ShouldBindJSON(&body); err != nil {
-		mslogger.LoggerGlobal.Errorf("JSON com formato inválido: %v", err)
+		//mslogger.LoggerGlobal.Errorf("JSON com formato inválido: %v", err)
 
 		msresponse.Fail(
 			c,
@@ -95,7 +95,7 @@ func (h *UserHandler) Insert(c *gin.Context) {
 	body.Email = strings.TrimSpace(body.Email)
 
 	if body.Userrole == "" || body.Username == "" || body.Password == "" || body.Email == "" {
-		mslogger.LoggerGlobal.Error("Faltam campos obrigatórios para cadastro de usuário")
+		//mslogger.LoggerGlobal.Error("Faltam campos obrigatórios para cadastro de usuário")
 
 		msresponse.Fail(
 			c,
@@ -109,7 +109,7 @@ func (h *UserHandler) Insert(c *gin.Context) {
 
 	res, err := h.Service.Insert(c.Request.Context(), body)
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Erro ao inserir usuário: %v", err)
+		//mslogger.LoggerGlobal.Errorf("Erro ao inserir usuário: %v", err)
 
 		msresponse.Fail(
 			c,
@@ -144,7 +144,7 @@ func (h *UserHandler) Select(c *gin.Context) {
 
 	result, err := h.Service.Select(c.Request.Context(), userID)
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Erro ao buscar usuário id=%d: %v", userID, err)
+		//mslogger.LoggerGlobal.Errorf("Erro ao buscar usuário id=%d: %v", userID, err)
 
 		msresponse.Fail(
 			c,
@@ -187,7 +187,7 @@ func (h *UserHandler) SelectUserByName(c *gin.Context) {
 
 	result, err := h.Service.SelectUserByName(c.Request.Context(), username)
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Erro ao buscar usuário username=%s: %v", username, err)
+		//mslogger.LoggerGlobal.Errorf("Erro ao buscar usuário username=%s: %v", username, err)
 
 		msresponse.Fail(
 			c,
@@ -230,7 +230,7 @@ func (h *UserHandler) SelectByEmail(c *gin.Context) {
 
 	result, err := h.Service.SelectByEmail(c.Request.Context(), email)
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Erro ao buscar usuário email=%s: %v", email, err)
+		//mslogger.LoggerGlobal.Errorf("Erro ao buscar usuário email=%s: %v", email, err)
 
 		msresponse.Fail(
 			c,
@@ -258,7 +258,7 @@ func (h *UserHandler) SelectByEmail(c *gin.Context) {
 func (h *UserHandler) SelectRows(c *gin.Context) {
 	result, err := h.Service.SelectRows(c.Request.Context())
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Erro ao listar usuários: %v", err)
+		//mslogger.LoggerGlobal.Errorf("Erro ao listar usuários: %v", err)
 
 		msresponse.Fail(
 			c,
@@ -295,7 +295,7 @@ func (h *UserHandler) Update(c *gin.Context) {
 	var body user.UserUpdate
 
 	if err := c.ShouldBindJSON(&body); err != nil {
-		mslogger.LoggerGlobal.Errorf("JSON com formato inválido: %v", err)
+		//mslogger.LoggerGlobal.Errorf("JSON com formato inválido: %v", err)
 
 		msresponse.Fail(
 			c,
@@ -312,7 +312,7 @@ func (h *UserHandler) Update(c *gin.Context) {
 	body.Email = strings.TrimSpace(body.Email)
 
 	if body.Userrole == "" || body.Username == "" || body.Email == "" {
-		mslogger.LoggerGlobal.Error("Faltam campos obrigatórios para atualização de usuário")
+		//mslogger.LoggerGlobal.Error("Faltam campos obrigatórios para atualização de usuário")
 
 		msresponse.Fail(
 			c,
@@ -326,7 +326,7 @@ func (h *UserHandler) Update(c *gin.Context) {
 
 	result, err := h.Service.Update(c.Request.Context(), userID, body)
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Erro ao atualizar usuário id=%d: %v", userID, err)
+		//mslogger.LoggerGlobal.Errorf("Erro ao atualizar usuário id=%d: %v", userID, err)
 
 		msresponse.Fail(
 			c,
@@ -361,7 +361,7 @@ func (h *UserHandler) Delete(c *gin.Context) {
 
 	result, err := h.Service.Delete(c.Request.Context(), userID)
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Erro ao remover usuário id=%d: %v", userID, err)
+		//mslogger.LoggerGlobal.Errorf("Erro ao remover usuário id=%d: %v", userID, err)
 
 		msresponse.Fail(
 			c,
@@ -392,7 +392,7 @@ func (h *UserHandler) Search(c *gin.Context) {
 	var filter user.UserSearch
 
 	if err := c.ShouldBindJSON(&filter); err != nil {
-		mslogger.LoggerGlobal.Errorf("JSON com formato inválido: %v", err)
+		//mslogger.LoggerGlobal.Errorf("JSON com formato inválido: %v", err)
 
 		msresponse.Fail(
 			c,
@@ -412,7 +412,7 @@ func (h *UserHandler) Search(c *gin.Context) {
 
 	result, err := h.Service.Search(c.Request.Context(), filter)
 	if err != nil {
-		mslogger.LoggerGlobal.Errorf("Erro ao pesquisar usuários: %v", err)
+		//mslogger.LoggerGlobal.Errorf("Erro ao pesquisar usuários: %v", err)
 
 		msresponse.Fail(
 			c,
