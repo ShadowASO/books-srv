@@ -71,11 +71,16 @@ func main() {
 		}
 	}()
 	/* Insere mensagem no logger de inicialização*/
-	mslogger.LoggerGlobal.Infof(
-		"app iniciou | mode=%s | env=%s",
-		cfg.GinMode,
-		cfg.ApplicationMode,
-	)
+	// mslogger.LoggerGlobal.Infof(
+	// 	"app iniciou | mode=%s | env=%s",
+	// 	cfg.GinMode,
+	// 	cfg.ApplicationMode,
+	// )
+	mslogger.LoggerGlobal.InfoData("app iniciou", mslogger.AppLogData{
+		Context: "startup",
+		Mode:    gin.Mode(),
+		Env:     config.GlobalConfig.ApplicationMode,
+	})
 	/* Cria um contexto para uso pelo mongo*/
 	appCtx := context.Background()
 
@@ -146,6 +151,7 @@ func main() {
 
 	/* Chama a função que rotina que cria as rotas do sistema. */
 	routes.SetRotasSistema(router, cfg, db, booksCollection)
+	/*  -----------------------------------------------------  */
 
 	/* Faz a configuração do Servidor HTTP. */
 	addr := cfg.ServerPort

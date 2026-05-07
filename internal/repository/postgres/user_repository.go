@@ -43,6 +43,17 @@ func (r *UserPGRepository) ensureDB() error {
 	return nil
 }
 
+func normalizeUserRole(value string) string {
+	role := strings.ToLower(strings.TrimSpace(value))
+
+	switch role {
+	case "admin", "developer":
+		return role
+	default:
+		return "user"
+	}
+}
+
 func (r *UserPGRepository) Insert(
 	ctx context.Context,
 	data user.UserCreate,
@@ -58,7 +69,6 @@ func (r *UserPGRepository) Insert(
 			password,
 			email,
 			created_at
-			//updated_at
 		)
 		VALUES ($1, $2, $3, $4, NOW())
 		RETURNING user_id
@@ -69,10 +79,10 @@ func (r *UserPGRepository) Insert(
 	err := r.Db.QueryRowContext(
 		ctx,
 		query,
-		data.Userrole,
-		data.Username,
-		data.Password,
-		data.Email,
+		normalizeUserRole(data.Userrole),
+		strings.TrimSpace(data.Username),
+		strings.TrimSpace(data.Password),
+		strings.TrimSpace(data.Email),
 	).Scan(&userID)
 
 	if err != nil {
@@ -100,17 +110,16 @@ func (r *UserPGRepository) Update(
 			userrole = $2,
 			password = COALESCE(NULLIF($3, ''), password),
 			email = $4
-			//updated_at = NOW()
 		WHERE user_id = $5
 	`
 
 	result, err := r.Db.ExecContext(
 		ctx,
 		query,
-		data.Username,
-		data.Userrole,
-		data.Password,
-		data.Email,
+		strings.TrimSpace(data.Username),
+		normalizeUserRole(data.Userrole),
+		strings.TrimSpace(data.Password),
+		strings.TrimSpace(data.Email),
 		userID,
 	)
 	if err != nil {
@@ -349,6 +358,12 @@ func (r *UserPGRepository) Search(
 
 	search := strings.TrimSpace(filter.NmSearch)
 
+	// Como a listagem geral já é feita por outro método,
+	// busca vazia não deve retornar todos os registros.
+	if search == "" {
+		return []user.User{}, nil
+	}
+
 	query := `
 		SELECT
 			user_id,
@@ -357,13 +372,9 @@ func (r *UserPGRepository) Search(
 			password,
 			email,
 			created_at
-			
 		FROM users
 		WHERE
-			$1 = ''
-			OR username ILIKE '%' || $1 || '%'
-			OR email ILIKE '%' || $1 || '%'
-			OR userrole ILIKE '%' || $1 || '%'
+			username ILIKE '%' || $1 || '%'
 		ORDER BY user_id ASC
 		LIMIT $2
 	`
@@ -374,7 +385,7 @@ func (r *UserPGRepository) Search(
 	}
 	defer rows.Close()
 
-	var results []user.User
+	results := make([]user.User, 0)
 
 	for rows.Next() {
 		var row user.User

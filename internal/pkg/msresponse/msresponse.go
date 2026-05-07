@@ -114,7 +114,7 @@ func Fail(
 	// Esses casos já serão registrados pelo middleware HTTP.
 	if status >= 500 && mslogger.LoggerGlobal != nil {
 		mslogger.LoggerGlobal.ErrorData("response_fail", mslogger.AppLogData{
-			ID:          rid,
+			RequestID:   rid,
 			Status:      status,
 			Code:        int(code),
 			Context:     message,

@@ -3,9 +3,11 @@
 File: mslogger.go
 Autor: Aldenor
 Data: 04-05-2026
-Alteração: 06-05-2026
+Alteração: 07-05-2026
 ---------------------------------------------------------------------------------------
-Inicializa o serviço de logger  do sistema
+Inicializa o serviço de logger do sistema usando log/slog.
+
+Exemplo de uso:
 
 	err = mslogger.InitGlobal(mslogger.Options{
 		FilePath:   "./logs/app.log",
@@ -33,10 +35,10 @@ Inicializa o serviço de logger  do sistema
 package mslogger
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -92,6 +94,23 @@ func ParseLevel(s string) Level {
 	}
 }
 
+func toSlogLevel(level Level) slog.Level {
+	switch level {
+	case DebugLevel:
+		return slog.LevelDebug
+	case InfoLevel:
+		return slog.LevelInfo
+	case WarnLevel:
+		return slog.LevelWarn
+	case ErrorLevel:
+		return slog.LevelError
+	case OffLevel:
+		return slog.Level(1000)
+	default:
+		return slog.LevelInfo
+	}
+}
+
 type Options struct {
 	FilePath   string
 	Stdout     bool
@@ -106,31 +125,8 @@ type Options struct {
 	AddSource  bool
 }
 
-type Source struct {
-	Function string `json:"function,omitempty"`
-	File     string `json:"file,omitempty"`
-	Line     int    `json:"line,omitempty"`
-}
-
-type AppEntry struct {
-	Time    string  `json:"time"`
-	Level   string  `json:"level"`
-	Message string  `json:"msg"`
-	Service string  `json:"service,omitempty"`
-	Source  *Source `json:"source,omitempty"`
-
-	ID          string `json:"id,omitempty"`
-	Context     string `json:"context,omitempty"`
-	Error       string `json:"error,omitempty"`
-	UserID      string `json:"user_id,omitempty"`
-	Username    string `json:"username,omitempty"`
-	Status      int    `json:"status,omitempty"`
-	Code        int    `json:"code,omitempty"`
-	Description string `json:"description,omitempty"`
-}
-
 type AppLogData struct {
-	ID          string
+	RequestID   string
 	Context     string
 	Error       error
 	UserID      string
@@ -138,32 +134,13 @@ type AppLogData struct {
 	Status      int
 	Code        int
 	Description string
-}
 
-type HTTPEntry struct {
-	Time    string `json:"time"`
-	Level   string `json:"level"`
-	Message string `json:"msg"`
-	Service string `json:"service,omitempty"`
-
-	ID       string `json:"id,omitempty"`
-	Status   int    `json:"status"`
-	Method   string `json:"method"`
-	Path     string `json:"path"`
-	Route    string `json:"route,omitempty"`
-	Handler  string `json:"handler,omitempty"`
-	ClientIP string `json:"client_ip,omitempty"`
-
-	Duration   string `json:"duration"`
-	DurationMS int64  `json:"duration_ms"`
-	DurationUS int64  `json:"duration_us"`
-
-	ErrorCode   string `json:"error_code,omitempty"`
-	ErrorDetail string `json:"error_detail,omitempty"`
+	Mode string
+	Env  string
 }
 
 type HTTPLogData struct {
-	ID          string
+	RequestID   string
 	Status      int
 	Method      string
 	Path        string
@@ -176,32 +153,31 @@ type HTTPLogData struct {
 }
 
 type Logger struct {
-	closer  io.Closer
-	level   atomic.Int32
-	service string
-	json    bool
-	source  bool
-	std     *log.Logger
-	mu      sync.Mutex
+	closer   io.Closer
+	level    atomic.Int32
+	levelVar *slog.LevelVar
+	handler  slog.Handler
+	service  string
+	mu       sync.Mutex
 }
 
 var (
-	LoggerGlobal     *Logger
-	onceLoggerGlobal sync.Once
+	LoggerGlobal *Logger
+	//onceLoggerGlobal sync.Once
 )
 
 func InitGlobal(opts Options) error {
-	var err error
+	if envLevel := os.Getenv("LOG_LEVEL"); envLevel != "" {
+		opts.Level = ParseLevel(envLevel)
+	}
 
-	onceLoggerGlobal.Do(func() {
-		if opts.Level == 0 && os.Getenv("LOG_LEVEL") != "" {
-			opts.Level = ParseLevel(os.Getenv("LOG_LEVEL"))
-		}
+	logger, err := New(opts)
+	if err != nil {
+		return err
+	}
 
-		LoggerGlobal, err = New(opts)
-	})
-
-	return err
+	LoggerGlobal = logger
+	return nil
 }
 
 func ensureDir(path string) error {
@@ -265,17 +241,72 @@ func New(opts Options) (*Logger, error) {
 
 	out := io.MultiWriter(writers...)
 
+	levelVar := new(slog.LevelVar)
+	levelVar.Set(toSlogLevel(opts.Level))
+
+	handlerOpts := &slog.HandlerOptions{
+		Level:     levelVar,
+		AddSource: opts.AddSource,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.SourceKey {
+				src, ok := a.Value.Any().(*slog.Source)
+				if !ok || src == nil {
+					return slog.Attr{}
+				}
+
+				// Quando o record foi criado sem source válido,
+				// o slog pode gerar file=".", line=0, function="".
+				// Nesse caso, removemos o atributo source.
+				if src.Function == "" || src.File == "" || src.File == "." || src.Line == 0 {
+					return slog.Attr{}
+				}
+
+				return slog.Group(
+					slog.SourceKey,
+					slog.String("function", shortFunctionName(src.Function)),
+					slog.String("file", filepath.Base(src.File)),
+					slog.Int("line", src.Line),
+				)
+			}
+
+			return a
+		},
+	}
+
+	var handler slog.Handler
+
+	if opts.JSON {
+		handler = slog.NewJSONHandler(out, handlerOpts)
+	} else {
+		handler = slog.NewTextHandler(out, handlerOpts)
+	}
+
+	handler = handler.WithAttrs([]slog.Attr{
+		slog.String("service", opts.Service),
+	})
+
 	l := &Logger{
-		closer:  closer,
-		service: opts.Service,
-		json:    opts.JSON,
-		source:  opts.AddSource,
-		std:     log.New(out, "", 0),
+		closer:   closer,
+		levelVar: levelVar,
+		handler:  handler,
+		service:  opts.Service,
 	}
 
 	l.level.Store(int32(opts.Level))
 
 	return l, nil
+}
+
+func shortFunctionName(fn string) string {
+	if fn == "" {
+		return ""
+	}
+
+	if idx := strings.LastIndex(fn, "/"); idx >= 0 {
+		fn = fn[idx+1:]
+	}
+
+	return fn
 }
 
 func (l *Logger) SetLevel(level Level) {
@@ -284,6 +315,10 @@ func (l *Logger) SetLevel(level Level) {
 	}
 
 	l.level.Store(int32(level))
+
+	if l.levelVar != nil {
+		l.levelVar.Set(toSlogLevel(level))
+	}
 }
 
 func (l *Logger) Level() Level {
@@ -294,87 +329,122 @@ func (l *Logger) Level() Level {
 	return Level(l.level.Load())
 }
 
-func (l *Logger) enabled(target Level) bool {
-	cur := l.Level()
+func (l *Logger) enabled(ctx context.Context, level Level) bool {
+	if l == nil {
+		return false
+	}
 
-	return cur != OffLevel && target >= cur
+	if l.Level() == OffLevel {
+		return false
+	}
+
+	if l.handler == nil {
+		return false
+	}
+
+	return l.handler.Enabled(ctx, toSlogLevel(level))
 }
 
-func caller(skip int) *Source {
-	pc, file, line, ok := runtime.Caller(skip)
-	if !ok {
-		return nil
-	}
-
-	fn := runtime.FuncForPC(pc)
-
-	fnName := ""
-	if fn != nil {
-		fnName = fn.Name()
-
-		if idx := strings.LastIndex(fnName, "/"); idx >= 0 {
-			fnName = fnName[idx+1:]
-		}
-	}
-
-	return &Source{
-		Function: fnName,
-		File:     filepath.Base(file),
-		Line:     line,
-	}
-}
-
-func (l *Logger) app(level Level, skip int, msg string, data AppLogData) {
+func (l *Logger) log(ctx context.Context, level Level, skip int, msg string, attrs ...slog.Attr) {
 	if l == nil {
 		return
 	}
 
-	if !l.enabled(level) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	if !l.enabled(ctx, level) {
 		return
 	}
 
-	entry := AppEntry{
-		Time:     time.Now().Format(time.RFC3339Nano),
-		Level:    strings.ToUpper(level.String()),
-		Message:  msg,
-		Service:  l.service,
-		ID:       data.ID,
-		Context:  data.Context,
-		UserID:   data.UserID,
-		Username: data.Username,
+	var pcs [1]uintptr
+	runtime.Callers(skip, pcs[:])
+
+	record := slog.NewRecord(
+		time.Now(),
+		toSlogLevel(level),
+		msg,
+		pcs[0],
+	)
+
+	record.AddAttrs(attrs...)
+
+	_ = l.handler.Handle(ctx, record)
+}
+
+func (l *Logger) logNoSource(ctx context.Context, level Level, msg string, attrs ...slog.Attr) {
+	if l == nil {
+		return
+	}
+
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	if !l.enabled(ctx, level) {
+		return
+	}
+
+	record := slog.NewRecord(
+		time.Now(),
+		toSlogLevel(level),
+		msg,
+		0,
+	)
+
+	record.AddAttrs(attrs...)
+
+	_ = l.handler.Handle(ctx, record)
+}
+
+func appAttrs(data AppLogData) []slog.Attr {
+	attrs := make([]slog.Attr, 0, 10)
+
+	if data.RequestID != "" {
+		attrs = append(attrs, slog.String("request_id", data.RequestID))
+	}
+
+	if data.Context != "" {
+		attrs = append(attrs, slog.String("context", data.Context))
 	}
 
 	if data.Error != nil {
-		entry.Error = data.Error.Error()
+		attrs = append(attrs, slog.String("error", data.Error.Error()))
 	}
 
-	if l.source {
-		entry.Source = caller(skip)
+	if data.UserID != "" {
+		attrs = append(attrs, slog.String("user_id", data.UserID))
 	}
 
-	if l.json {
-		b, err := json.Marshal(entry)
-		if err != nil {
-			l.std.Printf(
-				`{"time":"%s","level":"ERROR","msg":"erro ao serializar log","error":%q}`,
-				time.Now().Format(time.RFC3339Nano),
-				err.Error(),
-			)
-			return
-		}
-
-		l.std.Println(string(b))
-		return
+	if data.Username != "" {
+		attrs = append(attrs, slog.String("username", data.Username))
 	}
 
-	prefix := strings.ToUpper(level.String())
-
-	if entry.Source != nil {
-		l.std.Printf("[%s] %s:%d %s", prefix, entry.Source.File, entry.Source.Line, msg)
-		return
+	if data.Status != 0 {
+		attrs = append(attrs, slog.Int("status", data.Status))
 	}
 
-	l.std.Printf("[%s] %s", prefix, msg)
+	if data.Code != 0 {
+		attrs = append(attrs, slog.Int("code", data.Code))
+	}
+
+	if data.Description != "" {
+		attrs = append(attrs, slog.String("description", data.Description))
+	}
+	if data.Mode != "" {
+		attrs = append(attrs, slog.String("mode", data.Mode))
+	}
+
+	if data.Env != "" {
+		attrs = append(attrs, slog.String("env", data.Env))
+	}
+
+	return attrs
+}
+
+func (l *Logger) app(level Level, skip int, msg string, data AppLogData) {
+	l.log(context.Background(), level, skip, msg, appAttrs(data)...)
 }
 
 func (l *Logger) Debug(msg string) {
@@ -390,7 +460,7 @@ func (l *Logger) Info(msg string) {
 }
 
 func (l *Logger) Infof(format string, args ...any) {
-	l.app(InfoLevel, 3, fmt.Sprintf(format, args...), AppLogData{})
+	l.app(InfoLevel, 4, fmt.Sprintf(format, args...), AppLogData{})
 }
 
 func (l *Logger) Warn(msg string) {
@@ -409,12 +479,12 @@ func (l *Logger) Errorf(format string, args ...any) {
 	l.app(ErrorLevel, 4, fmt.Sprintf(format, args...), AppLogData{})
 }
 
-func (l *Logger) ErrorErr(context string, err error) {
+func (l *Logger) ErrorErr(msg string, err error) {
 	if err == nil {
 		return
 	}
 
-	l.app(ErrorLevel, 4, context, AppLogData{
+	l.app(ErrorLevel, 4, msg, AppLogData{
 		Error: err,
 	})
 }
@@ -435,69 +505,57 @@ func (l *Logger) ErrorData(msg string, data AppLogData) {
 	l.app(ErrorLevel, 4, msg, data)
 }
 
+func httpLevel(status int) Level {
+	switch {
+	case status >= 500:
+		return ErrorLevel
+	case status >= 400:
+		return WarnLevel
+	default:
+		return InfoLevel
+	}
+}
+
 func (l *Logger) HTTP(data HTTPLogData) {
 	if l == nil {
 		return
 	}
 
-	var level Level
+	level := httpLevel(data.Status)
 
-	switch {
-	case data.Status >= 500:
-		level = ErrorLevel
-	case data.Status >= 400:
-		level = WarnLevel
-	default:
-		level = InfoLevel
+	attrs := []slog.Attr{
+		slog.Int("status", data.Status),
+		slog.String("method", data.Method),
+		slog.String("path", data.Path),
+		slog.String("duration", data.Duration.String()),
+		slog.Int64("duration_us", data.Duration.Microseconds()),
 	}
 
-	if !l.enabled(level) {
-		return
+	if data.RequestID != "" {
+		attrs = append(attrs, slog.String("request_id", data.RequestID))
 	}
 
-	entry := HTTPEntry{
-		Time:        time.Now().Format(time.RFC3339Nano),
-		Level:       strings.ToUpper(level.String()),
-		Message:     "http_request",
-		Service:     l.service,
-		ID:          data.ID,
-		Status:      data.Status,
-		Method:      data.Method,
-		Path:        data.Path,
-		Route:       data.Route,
-		Handler:     data.Handler,
-		ClientIP:    data.ClientIP,
-		Duration:    data.Duration.String(),
-		DurationMS:  data.Duration.Milliseconds(),
-		DurationUS:  data.Duration.Microseconds(),
-		ErrorCode:   data.ErrorCode,
-		ErrorDetail: data.ErrorDetail,
+	if data.Route != "" {
+		attrs = append(attrs, slog.String("route", data.Route))
 	}
 
-	if l.json {
-		b, err := json.Marshal(entry)
-		if err != nil {
-			l.std.Printf(
-				`{"time":"%s","level":"ERROR","msg":"erro ao serializar log http","error":%q}`,
-				time.Now().Format(time.RFC3339Nano),
-				err.Error(),
-			)
-			return
-		}
-
-		l.std.Println(string(b))
-		return
+	if data.Handler != "" {
+		attrs = append(attrs, slog.String("handler", data.Handler))
 	}
 
-	l.std.Printf(
-		"[%s] %d %s %s duration=%s id=%s",
-		entry.Level,
-		entry.Status,
-		entry.Method,
-		entry.Path,
-		entry.Duration,
-		entry.ID,
-	)
+	if data.ClientIP != "" {
+		attrs = append(attrs, slog.String("client_ip", data.ClientIP))
+	}
+
+	if data.ErrorCode != "" {
+		attrs = append(attrs, slog.String("error_code", data.ErrorCode))
+	}
+
+	if data.ErrorDetail != "" {
+		attrs = append(attrs, slog.String("error_detail", data.ErrorDetail))
+	}
+
+	l.logNoSource(context.Background(), level, "http_request", attrs...)
 }
 
 func (l *Logger) Close() error {

@@ -14,6 +14,7 @@ package handlers
 import (
 	"microsrv/internal/domain/user"
 
+	"microsrv/internal/pkg/mslogger"
 	"microsrv/internal/pkg/msresponse"
 	"microsrv/internal/services"
 	"net/http"
@@ -258,7 +259,7 @@ func (h *UserHandler) SelectByEmail(c *gin.Context) {
 func (h *UserHandler) SelectRows(c *gin.Context) {
 	result, err := h.Service.SelectRows(c.Request.Context())
 	if err != nil {
-		//mslogger.LoggerGlobal.Errorf("Erro ao listar usuários: %v", err)
+		mslogger.LoggerGlobal.Errorf("Erro ao listar usuários: %v", err)
 
 		msresponse.Fail(
 			c,
@@ -403,6 +404,7 @@ func (h *UserHandler) Search(c *gin.Context) {
 		)
 		return
 	}
+	//mslogger.LoggerGlobal.Errorf("JSON com formato inválido: %v", filter)
 
 	filter.NmSearch = strings.TrimSpace(filter.NmSearch)
 
@@ -423,6 +425,7 @@ func (h *UserHandler) Search(c *gin.Context) {
 		)
 		return
 	}
+	//mslogger.LoggerGlobal.Infof("JSON com formato inválido: %v", result)
 
 	msresponse.OK(c, http.StatusOK, "Busca realizada com sucesso", result)
 }

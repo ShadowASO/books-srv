@@ -19,6 +19,7 @@ import (
 
 	"microsrv/internal/domain"
 	"microsrv/internal/domain/user"
+	auth "microsrv/internal/pkg/msauth"
 	"microsrv/internal/pkg/mslogger"
 )
 
@@ -90,6 +91,12 @@ func (s *UserService) Insert(
 	if data.Email == "" {
 		return nil, fmt.Errorf("email não informado")
 	}
+
+	hashedPassword, err := auth.HashPassword(data.Password)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao gerar hash da senha: %w", err)
+	}
+	data.Password = string(hashedPassword)
 
 	userID, err := repo.Insert(ctx, data)
 	if err != nil {
@@ -255,10 +262,19 @@ func (s *UserService) Update(
 	if data.Username == "" {
 		return nil, fmt.Errorf("nome de usuário não informado")
 	}
+	if data.Password == "" {
+		return nil, fmt.Errorf("senha não informada")
+	}
 
 	if data.Email == "" {
 		return nil, fmt.Errorf("email não informado")
 	}
+
+	hashedPassword, err := auth.HashPassword(data.Password)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao gerar hash da senha: %w", err)
+	}
+	data.Password = string(hashedPassword)
 
 	resp, err := repo.Update(ctx, userID, data)
 	if err != nil {

@@ -68,7 +68,7 @@ func SetRotasSistema(router *gin.Engine, cfg *config.Config, dbPG *postgres.PGPo
 
 		}
 
-		tabelasApi := verApi.Group("/tabelas")
+		tabelasApi := verApi.Group("/tabelas", jwt.AuthMiddleware())
 		{
 			tabelasApi.POST("/books", booksHandler.Insert)
 			tabelasApi.PUT("/books/:id", booksHandler.Update)
@@ -78,7 +78,7 @@ func SetRotasSistema(router *gin.Engine, cfg *config.Config, dbPG *postgres.PGPo
 
 		}
 
-		usersApi := verApi.Group("/user")
+		usersApi := verApi.Group("/auth/users")
 		{
 			usersApi.POST("", userHandler.Insert)
 			usersApi.GET("", userHandler.SelectRows)

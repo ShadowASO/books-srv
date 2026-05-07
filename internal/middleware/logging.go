@@ -25,9 +25,9 @@ func Logging() gin.HandlerFunc {
 
 		duration := time.Since(start)
 
-		id := c.Writer.Header().Get("X-Request-Id")
-		if id == "" {
-			id = c.GetString("request_id")
+		request_id := c.Writer.Header().Get("X-Request-Id")
+		if request_id == "" {
+			request_id = c.GetString("request_id")
 		}
 
 		var errorCode string
@@ -41,7 +41,7 @@ func Logging() gin.HandlerFunc {
 		}
 
 		mslogger.LoggerGlobal.HTTP(mslogger.HTTPLogData{
-			ID:          id,
+			RequestID:   request_id,
 			Status:      c.Writer.Status(),
 			Method:      c.Request.Method,
 			Path:        c.Request.URL.Path,
