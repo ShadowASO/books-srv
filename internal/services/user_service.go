@@ -3,6 +3,7 @@
 File: user_service.go
 Autor: Aldenor
 Data: 29-04-2026
+Alteração: 07-05-2026
 ----------------------------------------------------------------------------------------
 Finalidade:
 Operações de serviço para usuários, utilizando repositório PostgreSQL.

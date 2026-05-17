@@ -1,6 +1,6 @@
 # USO:
 # sudo docker compose -f docker-compose.yml  up --build -d
-# sudo docker compose -f docker-compose.yml  down
+# sudo docker compose -f docker-compose.yml  down --rmi all
 #
 # Se books-network ou mongo-network não existirem, crie manualmente:
 # docker network create books-network
@@ -9,15 +9,17 @@
 services:
     books-srv:
         build: .
-        image: books-srv        
+        image: books-srv       
+        container_name: books-srv 
         restart: always
 
         networks:
             - books-network
             - mongo-network
+            - auth-network
 
         ports:
-            - "4010:4010"
+            - "127.0.0.1:4010:4010"
         env_file:
             - .env
 
@@ -41,3 +43,6 @@ networks:
   mongo-network:
     external: true
     name: mongo-network
+    
+  auth-network:
+    external: true

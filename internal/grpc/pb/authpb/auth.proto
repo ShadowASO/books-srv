@@ -1,0 +1,41 @@
+// proto/auth/v1/auth.proto
+
+syntax = "proto3";
+
+package auth.v1;
+
+option go_package = "internal/grpc/pb/authpb;authpb";
+
+service AuthService {
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc VerifyToken(TokenRequest) returns (TokenClaims);
+  rpc RefreshToken(TokenRequest) returns (RefreshTokenResponse);
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message TokenRequest {
+  string token = 1;
+}
+
+message LoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+ }
+
+message RefreshTokenResponse {
+  string access_token = 1;
+  string token_type = 2;
+  int64 expires_in = 3;
+}
+
+message TokenClaims {
+  int64 id = 1;
+  string name = 2;
+  string email = 3;
+  string role = 4;
+  int64 exp = 5;
+}

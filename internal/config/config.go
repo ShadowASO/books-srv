@@ -40,6 +40,17 @@ type Config struct {
 	MdUser string
 	MdPass string
 
+	//Auth
+	AuthName               string
+	AuthServiceURL         string
+	AuthInsecureSkipVerify bool
+
+	// gRPC
+
+	AuthGRPCHost    string
+	AuthGRPCPort    int
+	AuthClientDebug bool
+
 	// JWT
 	JWTSecretKey       string
 	AccessTokenExpire  time.Duration
@@ -126,6 +137,40 @@ func getEnv(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func getEnvBool(key string, defaultValue bool) bool {
+	value := strings.TrimSpace(strings.ToLower(os.Getenv(key)))
+	if value == "" {
+		return defaultValue
+	}
+
+	switch value {
+	case "1", "true", "yes", "y", "sim", "s":
+		return true
+	case "0", "false", "no", "n", "nao", "não":
+		return false
+	default:
+		return defaultValue
+	}
+}
+func getEnvInt(key string, fallback int) int {
+	v, ok := os.LookupEnv(key)
+	if !ok {
+		return fallback
+	}
+
+	v = strings.TrimSpace(v)
+	if v == "" {
+		return fallback
+	}
+
+	parsed, err := strconv.Atoi(v)
+	if err != nil {
+		return fallback
+	}
+
+	return parsed
 }
 
 func getEnvRequired(key string) (string, error) {
@@ -365,6 +410,7 @@ func initEnv(cfg *Config) error {
 	// MongoDB
 	cfg.MdHost = strings.TrimSpace(getEnv("MD_HOST", "localhost"))
 	cfg.MdPort = strings.TrimSpace(getEnv("MD_PORT", "27017"))
+
 	// valida porta PG (opcional mas útil)
 	if _, err := normalizePort(cfg.MdPort, "27017"); err != nil {
 		return fmt.Errorf("MD_PORT inválido: %w", err)
@@ -378,6 +424,18 @@ func initEnv(cfg *Config) error {
 		return err
 	}
 
+	//***** AUTH *******************************
+
+	cfg.AuthName = getEnv("AUTH_NAME", "auth-srv")
+	cfg.AuthServiceURL = strings.TrimSpace(getEnv("AUTH_SERVICE_URL", "http://auth-srv:4010/api/v1"))
+	cfg.AuthClientDebug = getEnvBool("AUTH_CLIENT_DEBUG", false)
+	cfg.AuthInsecureSkipVerify = getEnvBool("AUTH_INSECURE_SKIP_VERIFY", false)
+
+	//****  gRPC   ***************************************
+	cfg.AuthGRPCHost = getEnv("AUTH_GRPC_HOST", "auth-srv")
+	cfg.AuthGRPCPort = getEnvInt("AUTH_GRPC_PORT", 50051)
+	cfg.AuthClientDebug = getEnvBool("AUTH_CLIENT_DEBUG", false)
+
 	// OpenSearch
 	rawOSHost := getEnv("OPENSEARCH_HOST", "http://192.168.0.30")
 	if cfg.OpenSearchHost, err = normalizeURLHost(rawOSHost); err != nil {
@@ -387,7 +445,7 @@ func initEnv(cfg *Config) error {
 	if _, err := normalizePort(cfg.OpenSearchPort, "9200"); err != nil {
 		return fmt.Errorf("OPENSEARCH_PORT inválido: %v", err)
 	}
-	//cfg.OpenSearchPort = getEnv("OPENSEARCH_PORT", "9200")
+
 	cfg.OpenSearchUser = strings.TrimSpace(getEnv("OPENSEARCH_USER", "admin"))
 
 	// OPENSEARCH_PASSWORD: NÃO ter fallback; required em production

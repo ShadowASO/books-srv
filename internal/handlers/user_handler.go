@@ -3,6 +3,7 @@
 File: user_handler.go
 Autor: Aldenor
 Data: 29-04-2026
+Alteração: 07-05-2026
 ---------------------------------------------------------------------------------------
 Finalidade:
 Handlers HTTP para operações CRUD de usuários.

@@ -23,10 +23,12 @@ import (
 
 	"microsrv/internal/config"
 	"microsrv/internal/middleware"
+	"microsrv/internal/pkg/msclientegrpc"
 	"microsrv/internal/pkg/mslogger"
 	"microsrv/internal/repository/mongodb"
 	"microsrv/internal/repository/postgres"
 	"microsrv/internal/routes"
+	"microsrv/internal/services/grpc_services/authgrpc"
 
 	_ "microsrv/docs"
 
@@ -71,20 +73,17 @@ func main() {
 		}
 	}()
 	/* Insere mensagem no logger de inicialização*/
-	// mslogger.LoggerGlobal.Infof(
-	// 	"app iniciou | mode=%s | env=%s",
-	// 	cfg.GinMode,
-	// 	cfg.ApplicationMode,
-	// )
+
 	mslogger.LoggerGlobal.InfoData("app iniciou", mslogger.AppLogData{
 		Context: "startup",
 		Mode:    gin.Mode(),
 		Env:     config.GlobalConfig.ApplicationMode,
 	})
+
 	/* Cria um contexto para uso pelo mongo*/
 	appCtx := context.Background()
 
-	/* Cria um cliente mongo para uso */
+	/* MONGODB - Cria um cliente mongo para uso */
 	mongoClient := mongodb.NewMongoDB(cfg)
 	if err := mongoClient.Connect(appCtx); err != nil {
 		mslogger.LoggerGlobal.ErrorErr("erro ao conectar MongoDB", err)
@@ -114,7 +113,7 @@ func main() {
 		return
 	}
 
-	/* Configura e cria uma conexta ao PostgreSQL*/
+	/* POSTGRESQL - Configura e cria uma conexta ao PostgreSQL*/
 	dbConfig := postgres.PGConfig{
 		Host:     cfg.PgHost,
 		Port:     cfg.PgPort,
@@ -138,6 +137,30 @@ func main() {
 		})
 	}()
 
+	// gRPC - Cliente do microsserviço de autenticação
+	authClient, err := authgrpc.New(msclientegrpc.ConfigClienteGRPC{
+		Name:    "auth-srv",
+		Host:    cfg.AuthGRPCHost,
+		Port:    cfg.AuthGRPCPort,
+		Timeout: 5 * time.Second,
+		Debug:   cfg.AuthClientDebug,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer authClient.Close()
+
+	defer func() {
+		if err := authClient.Close(); err != nil {
+			mslogger.LoggerGlobal.ErrorErr("erro ao fechar cliente gRPC de autenticação", err)
+			return
+		}
+
+		mslogger.LoggerGlobal.InfoData("cliente gRPC auth-srv encerrado com sucesso", mslogger.AppLogData{
+			Context: "shutdown",
+		})
+	}()
+
 	/* Cria um router do GIN*/
 	router := gin.New()
 
@@ -150,7 +173,7 @@ func main() {
 	)
 
 	/* Chama a função que rotina que cria as rotas do sistema. */
-	routes.SetRotasSistema(router, cfg, db, booksCollection)
+	routes.SetRotasSistema(router, cfg, db, booksCollection, authClient)
 	/*  -----------------------------------------------------  */
 
 	/* Faz a configuração do Servidor HTTP. */
